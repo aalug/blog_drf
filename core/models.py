@@ -43,9 +43,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system."""
     email = models.EmailField(max_length=255, unique=True)
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255, blank=True, null=True)
-    date_of_birth = models.DateField()
+    username = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -53,6 +51,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+
+    def __str__(self):
+        return self.username
+
+
+class UserProfile(models.Model):
+    """User profile for the User."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=255, blank=True, null=True)
+    last_name = models.CharField(max_length=255, blank=True, null=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    points = models.PositiveIntegerField(default=0)
+    profile_image = models.ImageField(upload_to=image_file_path, null=True)
+
+    def __str__(self):
+        return self.user.username
 
 
 class Post(models.Model):
@@ -131,3 +145,6 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# self.assertEqual(user.date_of_birth.strftime('%Y-%m-%d'), SAMPLE_USER_DETAILS['date_of_birth'])

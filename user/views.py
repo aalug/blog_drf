@@ -5,12 +5,13 @@ from rest_framework import generics, authentication, permissions
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 
-from .serializers import UserSerializer, AuthTokenSerializer
+from core.models import UserProfile
+from .serializers import UserSerializer, UserProfileSerializer, AuthTokenSerializer
 
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user."""
-    serializer_class = UserSerializer
+    serializer_class = UserProfileSerializer
 
 
 class CreateTokenView(ObtainAuthToken):
@@ -21,10 +22,12 @@ class CreateTokenView(ObtainAuthToken):
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
     """Manage the authenticated user."""
-    serializer_class = UserSerializer
+    serializer_class = UserProfileSerializer
     authentication_classes = (authentication.TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self):
         """Retrieve and return authenticated user."""
-        return self.request.user
+        return UserProfile.objects.filter(
+            user=self.request.user
+        ).first()
