@@ -1,28 +1,13 @@
 """
 Test fpr models.
 """
-import datetime
-
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils.text import slugify
 
-from core.models import Post, Comment, PostImage, Tag, image_file_path
-
-
-def create_user(user_details: dict[str, str] = None):
-    """Create and return a new user."""
-    payload = {
-        'email': 'user@example.com',
-        'password': 'password123',
-        'first_name': 'First',
-        'date_of_birth': '1950-10-10'
-    }
-    if user_details is not None:
-        payload.update(user_details)
-    return get_user_model().objects.create_user(payload)
+from core.models import Post, Comment, PostImage, Tag, image_file_path, UserProfile
 
 
 def create_sample_post(user, details=None):
@@ -46,13 +31,10 @@ class UserModelTests(TestCase):
         """Test creating a user with an email is successful."""
         email = 'test@example.com'
         password = 'test123'
-        first_name = 'John'
-        date_of_birth = datetime.datetime(day=1, month=1, year=2011)
         user = get_user_model().objects.create_user(
             email=email,
             password=password,
-            first_name=first_name,
-            date_of_birth=date_of_birth
+            username='test654'
         )
         self.assertEqual(user.email, email)
         self.assertTrue(user.check_password(password))
@@ -69,8 +51,7 @@ class UserModelTests(TestCase):
             user = get_user_model().objects.create_user(
                 email=email,
                 password='password123',
-                first_name='Adam',
-                date_of_birth='2012-12-12'
+                username=f'user{email[4]}'
             )
             self.assertEqual(user.email, expected)
 
@@ -80,19 +61,13 @@ class UserModelTests(TestCase):
             get_user_model().objects.create_user(
                 email='',
                 password='password123',
-                first_name='Marc',
-                date_of_birth='2012-12-12'
+                username='testuser345'
             )
 
     def test_new_user_with_too_short_password_raise_error(self):
         """Test that creating a user without a password raises a ValueError."""
         with self.assertRaises(ValueError):
-            get_user_model().objects.create_user(
-                email='testUser5@example.com',
-                password='test1',
-                first_name='Carl',
-                date_of_birth='2012-12-12'
-            )
+            get_user_model().objects.create_user(password='', email='test@example.com')
 
     def test_new_user_with_6_chars_password_success(self):
         """Test that creating a user with a password 6 characters
@@ -100,8 +75,7 @@ class UserModelTests(TestCase):
         get_user_model().objects.create_user(
             email='testUser6@example.com',
             password='test12',
-            first_name='Joe',
-            date_of_birth='2012-12-12'
+            username='testUser555'
         )
         self.assertEqual(get_user_model().objects.count(), 1)
 
@@ -110,11 +84,24 @@ class UserModelTests(TestCase):
         user = get_user_model().objects.create_superuser(
             email='test@example.com',
             password='admin123',
-            first_name='Admin',
-            date_of_birth='1999-09-09'
+            username='test14515'
         )
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_create_user_profile_success(self):
+        """Test creating a user profile is successful."""
+        user = get_user_model().objects.create_user(
+            email='test@example.com',
+            password='password123',
+            username='test6234'
+        )
+        user_profile = UserProfile.objects.create(
+            user=user,
+            first_name='John',
+            date_of_birth='2000-10-10',
+        )
+        self.assertEqual(str(user_profile), str(user))
 
 
 class PostModelTests(TestCase):
@@ -122,10 +109,9 @@ class PostModelTests(TestCase):
 
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            email='userr@example.com',
-            password='test123',
-            first_name='Joe',
-            date_of_birth='2000-12-12'
+            email='user@example.com',
+            password='password123',
+            username='user_name123'
         )
         self.post = create_sample_post(self.user)
 
