@@ -10,6 +10,7 @@ from rest_framework import status
 
 CREATE_USER_URL = reverse('user:create')
 TOKEN_URL = reverse('user:token')
+PROFILE_URL = reverse('user:profile')
 
 SAMPLE_USER_DETAILS = {
     'email': 'test@example.com',
@@ -125,3 +126,55 @@ class PublicUserApiTests(TestCase):
 
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_user_unauthorized(self):
+        """Test authentication is required to get to the users profile."""
+        res = self.client.get(PROFILE_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateUserApiTests(TestCase):
+    """Test API requests that require authentication."""
+
+    def setUp(self):
+        self.user = create_user(
+            email='user@example.com',
+            password='password123',
+            first_name='Adam',
+            date_of_birth='1970-07-07'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_retrieve_profile_success(self):
+        """Test retrieving profile for logged in user."""
+        res = self.client.get(PROFILE_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('email', res.data)
+        self.assertIn('first_name', res.data)
+        self.assertIn('last_name', res.data)
+        self.assertIn('date_of_birth', res.data)
+        self.assertIn('created_at', res.data)
+        self.assertEqual(res.data['email'], self.user.email)
+        self.assertEqual(res.data['first_name'], self.user.first_name)
+
+    def test_post_profile_not_allowed(self):
+        """Test POST is not allowed for the 'profile' endpoint."""
+        res = self.client.post(PROFILE_URL, {})
+
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_update_user_profile(self):
+        """Test updating the user profile for the authenticated user."""
+        payload = {
+            'last_name': 'SomeName',
+            'password': 'newPassword'
+        }
+        res = self.client.patch(PROFILE_URL, payload)
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.user.last_name, payload['last_name'])
+        self.assertTrue(self.user.check_password(payload['password']))
