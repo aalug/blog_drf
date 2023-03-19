@@ -46,8 +46,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255, blank=True, null=True)
     date_of_birth = models.DateField()
-    points = models.PositiveIntegerField(default=0)
-    profile_image = models.ImageField(upload_to=image_file_path, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -68,6 +66,7 @@ class Post(models.Model):
     description = models.CharField(max_length=255)
     body = models.TextField()
     cover_image = models.ImageField(upload_to=image_file_path, blank=False, null=False)
+    tags = models.ManyToManyField('Tag')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
