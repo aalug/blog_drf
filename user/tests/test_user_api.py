@@ -1,6 +1,8 @@
 """
 Tests for the user API.
 """
+import datetime
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -182,3 +184,19 @@ class PrivateUserApiTests(TestCase):
         res = self.client.patch(PROFILE_URL, payload, format='json')
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_profile_success(self):
+        """Test updating profile information is successful."""
+        date_of_birth = datetime.date(year=1950, month=5, day=5)
+        payload = {
+            'first_name': 'John',
+            'last_name': 'Something',
+            'date_of_birth': date_of_birth.strftime('%Y-%m-%d')
+        }
+        res = self.client.patch(PROFILE_URL, payload, format='json')
+        profile = UserProfile.objects.filter(user=self.user).first()
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(profile.first_name, payload['first_name'])
+        self.assertEqual(profile.last_name, payload['last_name'])
+        self.assertEqual(profile.date_of_birth, date_of_birth)
