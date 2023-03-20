@@ -95,6 +95,10 @@ class Post(models.Model):
         """Return comments for this post."""
         return Comment.objects.filter(post=self)
 
+    def number_of_comments(self):
+        """Return the number of comments for this post."""
+        return Comment.objects.filter(post=self).count()
+
     @property
     def images(self):
         """Return images for this post."""

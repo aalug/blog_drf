@@ -131,7 +131,6 @@ class PostModelTests(TestCase):
     def test_create_tag(self):
         """Test creating a tag is successful."""
         tag = Tag.objects.create(
-            user=self.user,
             name='Tag1'
         )
 

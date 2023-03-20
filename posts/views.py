@@ -52,6 +52,14 @@ class PostsViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by('-created_at').distinct()
 
+    def get_serializer_class(self):
+        """Return the serializer class for request."""
+        if self.action == 'list':
+            return serializers.PostSerializer
+        return serializers.PostDetailSerializer
+
     def perform_create(self, serializer):
         """Create a new post."""
         serializer.save(author=self.request.user)
+
+
