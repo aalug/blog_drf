@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'corsheaders',
     'core',
+    'user',
+    'posts',
 ]
 
 MIDDLEWARE = [
