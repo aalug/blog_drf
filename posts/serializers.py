@@ -22,15 +22,16 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ('id', 'title', 'slug', 'author',
-                  'description', 'tags', 'body',
-                  'cover_image', 'created_at', 'updated_at')
+                  'description', 'tags', 'cover_image',
+                  'number_of_comments', 'created_at',
+                  'updated_at')
         extra_kwargs = {
             'id': {'read_only': True},
             'slug': {'read_only': True},
             'author': {'read_only': True},
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True},
-            'body': {'write_only': True},
+            'number_of_comments': {'read_only': True},
         }
 
     @staticmethod
@@ -61,3 +62,10 @@ class PostSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class PostDetailSerializer(PostSerializer):
+    """Serialize a post detail view."""
+
+    class Meta(PostSerializer.Meta):
+        fields = PostSerializer.Meta.fields + ('body', 'images', 'comments')
