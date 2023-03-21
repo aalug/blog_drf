@@ -12,7 +12,7 @@ from django.utils.text import slugify
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Post, UserProfile, Tag
+from core.models import Post, UserProfile, Comment
 
 POSTS_URL = reverse('posts:post-list')
 
@@ -53,12 +53,11 @@ class PublicPostsAPITests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        self.user = create_user(is_staff=True)
+        self.post = create_post(self.user)
 
     def test_get_posts_success(self):
         """Test that retrieving a post list is successful without auth."""
-        create_post(
-            user=create_user(is_staff=True)
-        )
         res = self.client.get(POSTS_URL)
         results = res.data['results']
 
@@ -80,10 +79,7 @@ class PublicPostsAPITests(TestCase):
     def test_auth_required_to_patch(self):
         """Test that authentication is required to make
            PATCH requests to post-details endpoint."""
-        post = create_post(
-            user=create_user(is_staff=True)
-        )
-        url = detail_url(post.id)
+        url = detail_url(self.post.id)
         res = self.client.patch(url, {})
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -91,10 +87,7 @@ class PublicPostsAPITests(TestCase):
     def test_auth_required_to_delete(self):
         """Test that authentication is required to make
            DELETE requests to post-details endpoint."""
-        post = create_post(
-            user=create_user(is_staff=True)
-        )
-        url = detail_url(post.id)
+        url = detail_url(self.post.id)
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -102,20 +95,29 @@ class PublicPostsAPITests(TestCase):
     def test_get_post_details_success(self):
         """Test fetching post details is successful,
            and returns all fields"""
-        post = create_post(
-            user=create_user(is_staff=True)
-        )
-        url = detail_url(post.id)
+        url = detail_url(self.post.id)
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data['title'], post.title)
-        self.assertEqual(res.data['slug'], post.slug)
-        self.assertEqual(res.data['author'], post.author.id)
-        self.assertEqual(res.data['description'], post.description)
-        self.assertEqual(res.data['body'], post.body)
+        self.assertEqual(res.data['title'], self.post.title)
+        self.assertEqual(res.data['slug'], self.post.slug)
+        self.assertEqual(res.data['author'], self.post.author.id)
+        self.assertEqual(res.data['description'], self.post.description)
+        self.assertEqual(res.data['body'], self.post.body)
         self.assertIn('images', res.data)
         self.assertIn('tags', res.data)
+
+    def test_n_of_comments_field(self):
+        """Test number_of_comments field returns correct value."""
+        comment = Comment.objects.create(
+            text='some comment',
+            author=self.user,
+            post=self.post
+        )
+        res = self.client.get(POSTS_URL)
+        post = res.data['results'][0]
+
+        self.assertEqual(post['number_of_comments'], 1)
 
 
 class StaffPostsAPITests(TestCase):
