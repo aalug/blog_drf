@@ -5,11 +5,11 @@ from drf_spectacular.utils import (extend_schema_view,
                                    extend_schema,
                                    OpenApiParameter,
                                    OpenApiTypes)
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAdminUser, BasePermission, SAFE_METHODS
 
-from core.models import Post
+from core.models import Post, Tag
 from posts import serializers
 
 
@@ -62,4 +62,14 @@ class PostsViewSet(viewsets.ModelViewSet):
         """Create a new post."""
         serializer.save(author=self.request.user)
 
+
+class TagViewSet(mixins.UpdateModelMixin,
+                 mixins.DestroyModelMixin,
+                 mixins.ListModelMixin,
+                 viewsets.GenericViewSet):
+    """Manage tags in the database"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser | ReadOnly]
+    serializer_class = serializers.TagSerializer
+    queryset = Tag.objects.all()
 
