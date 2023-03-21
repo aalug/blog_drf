@@ -5,11 +5,15 @@ from drf_spectacular.utils import (extend_schema_view,
                                    extend_schema,
                                    OpenApiParameter,
                                    OpenApiTypes)
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAdminUser, BasePermission, SAFE_METHODS
+from rest_framework.permissions import (IsAdminUser,
+                                        IsAuthenticated,
+                                        BasePermission,
+                                        SAFE_METHODS)
+from rest_framework.response import Response
 
-from core.models import Post, Tag
+from core.models import Post, Tag, Comment
 from posts import serializers
 
 
@@ -31,7 +35,8 @@ class ReadOnly(BasePermission):
 )
 class PostsViewSet(viewsets.ModelViewSet):
     """Manage posts APIs. Unauthenticated users can only use
-       GET method, to create and update is_staff set to True is returned."""
+       GET method, to create, update and delete is_staff
+       set to True is required."""
     serializer_class = serializers.PostSerializer
     queryset = Post.objects.all()
     authentication_classes = [TokenAuthentication]
@@ -73,3 +78,35 @@ class TagViewSet(mixins.UpdateModelMixin,
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
 
+
+class CommentViewSer(mixins.CreateModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.DestroyModelMixin,
+                     viewsets.GenericViewSet):
+    """Manage comments APIs. Auth is required to create, update and delete."""
+    serializer_class = serializers.CommentSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Comment.objects.all()
+
+    def partial_update(self, request, *args, **kwargs):
+        comment = self.get_object()
+
+        # Check if the user is the author of the comment
+        if comment.author != request.user:
+            return Response({'detail': 'You are not the author of this comment.'}, status=status.HTTP_403_FORBIDDEN)
+
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        comment = self.get_object()
+
+        # Check if the user is the author of the comment
+        if comment.author != request.user:
+            return Response({'detail': 'You are not the author of this comment.'}, status=status.HTTP_403_FORBIDDEN)
+
+        return super().destroy(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        """Create a new comment."""
+        serializer.save(author=self.request.user)
