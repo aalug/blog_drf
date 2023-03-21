@@ -71,13 +71,15 @@ class PublicPostsAPITests(TestCase):
         self.assertNotIn('body', results[0])
 
     def test_auth_required_to_post(self):
-        """Test that authentication is required to make POST requests."""
+        """Test that authentication is required to make
+           POST requests to posts endpoint."""
         res = self.client.post(POSTS_URL, {})
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_to_patch(self):
-        """Test that authentication is required to make PATCH requests."""
+        """Test that authentication is required to make
+           PATCH requests to post-details endpoint."""
         post = create_post(
             user=create_user(is_staff=True)
         )
@@ -87,7 +89,8 @@ class PublicPostsAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_to_delete(self):
-        """Test that authentication is required to make DELETE requests."""
+        """Test that authentication is required to make
+           DELETE requests to post-details endpoint."""
         post = create_post(
             user=create_user(is_staff=True)
         )
@@ -97,7 +100,8 @@ class PublicPostsAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_get_post_details_success(self):
-        """Test that retrieving a post details is successful without auth."""
+        """Test fetching post details is successful,
+           and returns all fields"""
         post = create_post(
             user=create_user(is_staff=True)
         )
@@ -107,6 +111,7 @@ class PublicPostsAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['title'], post.title)
         self.assertEqual(res.data['slug'], post.slug)
+        self.assertEqual(res.data['author'], post.author.id)
         self.assertEqual(res.data['description'], post.description)
         self.assertEqual(res.data['body'], post.body)
         self.assertIn('images', res.data)
@@ -114,7 +119,7 @@ class PublicPostsAPITests(TestCase):
 
 
 class StaffPostsAPITests(TestCase):
-    """Test for API calls that require is_staff = True."""
+    """Test for API calls that require is_staff set to True."""
 
     def setUp(self):
         self.client = APIClient()
@@ -169,18 +174,3 @@ class StaffPostsAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         post_exists = Post.objects.filter(id=post.id).exists()
         self.assertFalse(post_exists)
-
-    def test_get_post_details_success(self):
-        """Test fetching post details is successful,
-           and returns all fields"""
-        post = create_post(user=self.admin,)
-        url = detail_url(post.id)
-        res = self.client.get(url)
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data['author'], post.author.id)
-        self.assertEqual(res.data['body'], post.body)
-        self.assertEqual(res.data['description'], post.description)
-        self.assertIn('images', res.data)
-
-
