@@ -1,13 +1,14 @@
 # Django REST framework Blog API
 
 The app is build with the **Django REST framework** and uses:
+- Docker
 - Postgres
 - drf-spectacular for documentation
 
 ## Getting started
 1. Clone the repository
 2. Rename `.env.sample` to `.env` and replace the values
-3. Run in your terminal `docker-compose up`
+3. Run in your terminal `docker-compose up --build`
 4. Now everything should be set up and app's documentation available on http://localhost:8000/api/docs/
 
 ## Testing
