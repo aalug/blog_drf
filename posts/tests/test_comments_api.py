@@ -32,12 +32,22 @@ class PublicCommentsAPITests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        self.user = create_user(is_staff=True)
+        self.post = create_post(self.user)
+
+    def test_create_comment_without_auth_error(self):
+        """Test that trying to create a comment without auth raises an error."""
+        payload = {
+            'text': 'test comment',
+            'post': self.post.id
+        }
+        res = self.client.post(COMMENTS_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_update_comment_no_auth__not_allowed(self):
         """Test that updating a comment without authentication is not allowed."""
-        user = create_user(is_staff=True)
-        post = create_post(user)
-        comment = create_comment(user, post)
+        comment = create_comment(self.user, self.post)
         url = detail_url(comment.id)
 
         res = self.client.patch(url, {})
@@ -46,9 +56,7 @@ class PublicCommentsAPITests(TestCase):
 
     def test_delete_comment_no_auth__not_allowed(self):
         """Test that deleting a comment without authentication is not allowed."""
-        user = create_user(is_staff=True)
-        post = create_post(user)
-        comment = create_comment(user, post)
+        comment = create_comment(self.user, self.post)
         url = detail_url(comment.id)
 
         res = self.client.delete(url)

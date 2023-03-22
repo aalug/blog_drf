@@ -12,7 +12,7 @@ from django.utils.text import slugify
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Post, UserProfile, Comment
+from core.models import Post, UserProfile, Comment, PostImage
 
 POSTS_URL = reverse('posts:post-list')
 
@@ -105,11 +105,12 @@ class PublicPostsAPITests(TestCase):
         self.assertEqual(res.data['description'], self.post.description)
         self.assertEqual(res.data['body'], self.post.body)
         self.assertIn('images', res.data)
+        self.assertIn('comments', res.data)
         self.assertIn('tags', res.data)
 
     def test_n_of_comments_field(self):
         """Test number_of_comments field returns correct value."""
-        comment = Comment.objects.create(
+        Comment.objects.create(
             text='some comment',
             author=self.user,
             post=self.post
@@ -118,6 +119,35 @@ class PublicPostsAPITests(TestCase):
         post = res.data['results'][0]
 
         self.assertEqual(post['number_of_comments'], 1)
+
+    def test_get_posts_comments(self):
+        """Test that comments are returned with the post details."""
+        comment = Comment.objects.create(
+            text='comment test',
+            post=self.post,
+            author=self.user
+        )
+        url = detail_url(self.post.id)
+        res = self.client.get(url)
+
+        comments = res.data['comments']
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(comments), 1)
+        self.assertEqual(comments[0]['author'], comment.author.id)
+        self.assertEqual(comments[0]['text'], comment.text)
+
+    def test_get_posts_images(self):
+        """Test that post images are returned with the post details."""
+        post_image = PostImage.objects.create(title='title', post=self.post)
+        url = detail_url(self.post.id)
+        res = self.client.get(url)
+
+        images = res.data['images']
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(images), 1)
+        self.assertEqual(images[0]['title'], post_image.title)
 
 
 class StaffPostsAPITests(TestCase):

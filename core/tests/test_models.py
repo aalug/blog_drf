@@ -189,10 +189,10 @@ class PostModelTests(TestCase):
 
     def test_n_of_comments_property(self):
         """Test number of comments property of the Post model."""
-        comment = Comment.objects.create(
+        Comment.objects.create(
             text='some comment',
             author=self.user,
-            post=self.post,
+            post=self.post
         )
 
-        self.assertEqual(self.post.number_of_comments, 1)
+        self.assertEqual(self.post.number_of_comments(), 1)
