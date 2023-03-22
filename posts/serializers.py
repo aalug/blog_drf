@@ -3,7 +3,7 @@ Serializers for the posts API.
 """
 from rest_framework import serializers
 
-from core.models import Post, Tag, Comment
+from core.models import Post, Tag, Comment, PostImage
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -29,6 +29,19 @@ class CommentSerializer(serializers.ModelSerializer):
             'text': {'required': True},
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True},
+        }
+
+
+class PostImageSerializer(serializers.ModelSerializer):
+    """Serializer for uploading images to a post."""
+
+    class Meta:
+        model = PostImage
+        fields = ('id', 'title', 'post', 'image')
+        extra_kwargs = {
+            'image': {'required': True},
+            'post': {'required': True},
+            'title': {'required': True, 'max_length': 100}
         }
 
 
@@ -84,6 +97,7 @@ class PostSerializer(serializers.ModelSerializer):
 class PostDetailSerializer(PostSerializer):
     """Serialize a post detail view."""
     comments = CommentSerializer(many=True, required=False)
+    images = PostImageSerializer(many=True, required=False)
 
     class Meta(PostSerializer.Meta):
         fields = PostSerializer.Meta.fields + ('body', 'images', 'comments')

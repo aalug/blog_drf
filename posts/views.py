@@ -13,7 +13,7 @@ from rest_framework.permissions import (IsAdminUser,
                                         SAFE_METHODS)
 from rest_framework.response import Response
 
-from core.models import Post, Tag, Comment
+from core.models import Post, Tag, Comment, PostImage
 from posts import serializers
 
 
@@ -110,3 +110,15 @@ class CommentViewSer(mixins.CreateModelMixin,
     def perform_create(self, serializer):
         """Create a new comment."""
         serializer.save(author=self.request.user)
+
+
+class PostImageViewSet(mixins.CreateModelMixin,
+                       mixins.UpdateModelMixin,
+                       mixins.DestroyModelMixin,
+                       viewsets.GenericViewSet):
+    """Manage post images APIs, is_staff set to True is required
+       to create, update and delete."""
+    serializer_class = serializers.PostImageSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
+    queryset = PostImage.objects.all()
