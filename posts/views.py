@@ -13,7 +13,7 @@ from rest_framework.permissions import (IsAdminUser,
                                         SAFE_METHODS)
 from rest_framework.response import Response
 
-from core.models import Post, Tag, Comment, PostImage
+from core.models import Post, Tag, Comment, PostImage, Vote
 from posts import serializers
 
 
@@ -122,3 +122,28 @@ class PostImageViewSet(mixins.CreateModelMixin,
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminUser]
     queryset = PostImage.objects.all()
+
+
+class VoteViewSet(mixins.CreateModelMixin,
+                  mixins.DestroyModelMixin,
+                  viewsets.GenericViewSet):
+    """Manage vote APIs, only authenticated users can create,
+       users are allowed to delete only their votes."""
+    serializer_class = serializers.VoteSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Vote.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        vote = self.get_object()
+
+        # Check if the user is the author of the comment
+        if vote.user != request.user:
+            return Response({'detail': 'You are not the author of this vote.'}, status=status.HTTP_403_FORBIDDEN)
+
+        return super().destroy(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        """Create a new vote."""
+        serializer.save(user=self.request.user)
+

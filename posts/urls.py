@@ -11,6 +11,7 @@ router.register('posts', views.PostsViewSet)
 router.register('tags', views.TagViewSet)
 router.register('comments', views.CommentViewSer)
 router.register('postimages', views.PostImageViewSet)
+router.register('votes', views.VoteViewSet)
 
 app_name = 'posts'
 

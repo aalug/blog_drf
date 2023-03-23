@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils.text import slugify
 
-from core.models import Post, Comment, PostImage, Tag, image_file_path, UserProfile
+from core.models import Post, Comment, PostImage, Tag, image_file_path, UserProfile, Vote
 
 
 def create_sample_post(user, details=None):
@@ -113,6 +113,7 @@ class PostModelTests(TestCase):
             password='password123',
             username='user_name123'
         )
+        UserProfile.objects.create(user=self.user)
         self.post = create_sample_post(self.user)
 
     def test_create_post(self):
@@ -166,7 +167,7 @@ class PostModelTests(TestCase):
         self.assertIn(post_image, self.post.images)
         self.assertEqual(self.post.images[0], post_image)
 
-    def test_create_comment_is_successful(self):
+    def test_create_comment(self):
         """Test creating a comment is successful."""
         comment = Comment.objects.create(
             text='some comment',
@@ -195,4 +196,58 @@ class PostModelTests(TestCase):
             post=self.post
         )
 
-        self.assertEqual(self.post.number_of_comments(), 1)
+        self.assertEqual(self.post.number_of_comments, 1)
+
+    def test_create_vote(self):
+        """Test that creating vote model is successful."""
+        comment = Comment.objects.create(
+            text='comment',
+            author=self.user,
+            post=self.post
+        )
+        Vote.objects.create(
+            user=self.user,
+            comment=comment,
+            vote_type=Vote.DOWNVOTE
+        )
+        n_of_votes = Vote.objects.all().count()
+
+        self.assertEqual(n_of_votes, 1)
+
+    def test_n_of_upvotes_property(self):
+        """Test number of upvotes property of the comment model."""
+        comment = Comment.objects.create(
+            text='comment',
+            author=self.user,
+            post=self.post
+        )
+        Vote.objects.create(
+            user=self.user,
+            comment=comment,
+            vote_type=Vote.UPVOTE
+        )
+        n_of__comment_upvotes = Vote.objects.filter(
+            comment=comment,
+            vote_type=Vote.UPVOTE
+        ).count()
+
+        self.assertEqual(n_of__comment_upvotes, comment.number_of_upvotes)
+
+    def test_n_of_downvotes_property(self):
+        """Test number of downvotes property of the comment model."""
+        comment = Comment.objects.create(
+            text='comment',
+            author=self.user,
+            post=self.post
+        )
+        Vote.objects.create(
+            user=self.user,
+            comment=comment,
+            vote_type=Vote.DOWNVOTE
+        )
+        n_of__comment_downvotes = Vote.objects.filter(
+            comment=comment,
+            vote_type=Vote.DOWNVOTE
+        ).count()
+
+        self.assertEqual(n_of__comment_downvotes, comment.number_of_downvotes)

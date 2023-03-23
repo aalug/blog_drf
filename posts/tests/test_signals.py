@@ -2,7 +2,7 @@
 Tests for signals in posts app.
 """
 from django.test import TestCase
-from core.models import Post, Tag
+from core.models import Post, Tag, Comment, Vote, UserProfile
 from .test_posts_api import create_post, create_user
 
 
@@ -36,3 +36,79 @@ class DeleteRelatedTagsSignalTest(TestCase):
         self.assertTrue(Tag.objects.filter(name=self.tag1.name).exists())
         self.assertFalse(Tag.objects.filter(name=self.tag2.name).exists())
         self.assertEqual(len(self.tag1.post_set.all()), 1)
+
+
+class CalculateUsersPointsSignalsTest(TestCase):
+    """Tests for the calculate user points signals."""
+
+    def setUp(self):
+        self.comment_author = create_user(
+            is_staff=False,
+            email='author@example.com',
+            username='author'
+        )
+        self.post = create_post(self.comment_author)
+        self.comment = Comment.objects.create(
+            text='test comment',
+            author=self.comment_author,
+            post=self.post
+        )
+        self.user = create_user(is_staff=False)
+
+    def test_user_points_add_upvote(self):
+        """Test that after upvote, user's points increase."""
+        points_before_vote = UserProfile.objects.get(user=self.comment_author).points
+
+        vote = Vote.objects.create(
+            user=self.user,
+            comment=self.comment,
+            vote_type=Vote.UPVOTE
+        )
+        points_after_vote = UserProfile.objects.get(user=self.comment_author).points
+
+        self.assertEqual(points_before_vote + 1, points_after_vote)
+
+    def test_user_points_add_downvote(self):
+        """Test that after downvote, user's points decrease."""
+        points_before_vote = UserProfile.objects.get(user=self.comment_author).points
+
+        vote = Vote.objects.create(
+            user=self.user,
+            comment=self.comment,
+            vote_type=Vote.DOWNVOTE
+        )
+        points_after_vote = UserProfile.objects.get(user=self.comment_author).points
+
+        self.assertEqual(points_before_vote - 1, points_after_vote)
+
+    def test_user_points_delete_upvote(self):
+        """Test that after deleting an upvote, user's points decrease."""
+        points_before_vote = UserProfile.objects.get(user=self.comment_author).points
+
+        vote = Vote.objects.create(
+            user=self.user,
+            comment=self.comment,
+            vote_type=Vote.UPVOTE
+        )
+        points_after_vote = UserProfile.objects.get(user=self.comment_author).points
+
+        self.assertEqual(points_before_vote + 1, points_after_vote)
+        vote.delete()
+        points_after_vote_delete = UserProfile.objects.get(user=self.comment_author).points
+        self.assertEqual(points_before_vote, points_after_vote_delete)
+
+    def test_user_points_delete_downvote(self):
+        """Test that after deleting a downvote, user's points increase."""
+        points_before_vote = UserProfile.objects.get(user=self.comment_author).points
+
+        vote = Vote.objects.create(
+            user=self.user,
+            comment=self.comment,
+            vote_type=Vote.DOWNVOTE
+        )
+        points_after_vote = UserProfile.objects.get(user=self.comment_author).points
+
+        self.assertEqual(points_before_vote - 1, points_after_vote)
+        vote.delete()
+        points_after_vote_delete = UserProfile.objects.get(user=self.comment_author).points
+        self.assertEqual(points_before_vote, points_after_vote_delete)
