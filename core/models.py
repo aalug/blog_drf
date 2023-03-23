@@ -62,7 +62,7 @@ class UserProfile(models.Model):
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
-    points = models.PositiveIntegerField(default=0)
+    points = models.IntegerField(default=0)
     profile_image = models.ImageField(upload_to=image_file_path, null=True)
 
     def __str__(self):
@@ -95,6 +95,7 @@ class Post(models.Model):
         """Return comments for this post."""
         return Comment.objects.filter(post=self)
 
+    @property
     def number_of_comments(self):
         """Return the number of comments for this post."""
         return Comment.objects.filter(post=self).count()
@@ -132,11 +133,35 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def number_of_upvotes(self):
+        """Returns number of upvotes for this comment."""
+        return Vote.objects.filter(comment=self, vote_type=Vote.UPVOTE).count()
+
+    @property
+    def number_of_downvotes(self):
+        """Returns number of upvotes for this comment."""
+        return Vote.objects.filter(comment=self, vote_type=Vote.DOWNVOTE).count()
+
     def __str__(self):
         return f'{self.author}: {self.text[:20]}'
 
     class Meta:
         ordering = ['-created_at', '-updated_at']
+
+
+class Vote(models.Model):
+    """Vote model to add upvote or downvote to a comment."""
+    UPVOTE = 'upvote'
+    DOWNVOTE = 'downvote'
+    VOTE_CHOICES = [
+        (UPVOTE, 'Upvote'),
+        (DOWNVOTE, 'Downvote'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
+    vote_type = models.CharField(choices=VOTE_CHOICES, max_length=8)
 
 
 class Tag(models.Model):

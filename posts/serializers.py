@@ -3,7 +3,7 @@ Serializers for the posts API.
 """
 from rest_framework import serializers
 
-from core.models import Post, Tag, Comment, PostImage
+from core.models import Post, Tag, Comment, PostImage, Vote
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -21,12 +21,15 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'author', 'text', 'post',
+                  'number_of_upvotes', 'number_of_downvotes',
                   'created_at', 'updated_at')
         extra_kwargs = {
             'id': {'read_only': True},
             'author': {'read_only': True},
             'post': {'required': True},
             'text': {'required': True},
+            'number_of_upvotes': {'read_only': True},
+            'number_of_downvotes': {'read_only': True},
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True},
         }
@@ -101,3 +104,16 @@ class PostDetailSerializer(PostSerializer):
 
     class Meta(PostSerializer.Meta):
         fields = PostSerializer.Meta.fields + ('body', 'images', 'comments')
+
+
+class VoteSerializer(serializers.ModelSerializer):
+    """Serializer for the vote model."""
+    vote_type = serializers.ChoiceField(choices=Vote.VOTE_CHOICES)
+
+    class Meta:
+        model = Vote
+        fields = ('id', 'user', 'comment', 'vote_type')
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'user': {'read_only': True}
+        }
