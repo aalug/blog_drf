@@ -40,5 +40,8 @@ To run tests:
 - Use `/api/post/postimages/` to create an additional image for a post
 - Use `/api/post/postimages/{id}/` to update and delete a post image
 
+- Use `/api/post/votes/` to create a vote of a comment 
+- Use `/api/post/votes/{id}/` to delete a vote. There is no option to update it (change the `vote_type` property). If a user decides to change their vote, it will be deleted and then created a new one.
+
 
 More information about API endpoints, with examples of data that needs to be sent with a request, can be found on http://localhost:8000/api/docs/ 
