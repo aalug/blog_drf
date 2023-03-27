@@ -150,6 +150,93 @@ class PublicPostsAPITests(TestCase):
         self.assertEqual(images[0]['title'], post_image.title)
 
 
+class SortPostsTests(TestCase):
+    """Test for API calls that use sorting of posts."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = create_user(is_staff=True)
+        self.post_1 = create_post(self.user, title='post 1')
+        self.post_2 = create_post(self.user, title='post 2')
+
+    def test_sorting_posts_by_comments(self):
+        """Test sorting posts by comments in ascending and descending order."""
+        Comment.objects.create(
+            text='test comment',
+            author=self.user,
+            post=self.post_1
+        )
+        res_asc = self.client.get(POSTS_URL, {'sort': 'comments-asc'})
+        results_asc = res_asc.data['results']
+
+        self.assertGreater(
+            results_asc[1]['number_of_comments'],
+            results_asc[0]['number_of_comments']
+        )
+
+        res_desc = self.client.get(POSTS_URL, {'sort': 'comments-desc'})
+        results_desc = res_desc.data['results']
+
+        self.assertGreater(
+            results_desc[0]['number_of_comments'],
+            results_desc[1]['number_of_comments']
+        )
+
+    def tst_sorting_by_title(self):
+        res_asc = self.client.get(POSTS_URL, {'sort': 'title-asc'})
+        results_asc = res_asc.data['results']
+
+        self.assertGreater(
+            results_asc[1]['title'],
+            results_asc[0]['title']
+        )
+
+        res_desc = self.client.get(POSTS_URL, {'sort': 'title-desc'})
+        results_desc = res_desc.data['results']
+
+        self.assertGreater(
+            results_desc[0]['title'],
+            results_desc[1]['title']
+        )
+
+    def tst_sorting_posts_by_date(self):
+        """Test sorting posts by date (created_at)
+           in ascending and descending order."""
+        res_asc = self.client.get(POSTS_URL, {'sort': 'date-asc'})
+        results_asc = res_asc.data['results']
+
+        self.assertGreater(
+            results_asc[1]['created_at'],
+            results_asc[0]['created_at']
+        )
+
+        res_desc = self.client.get(POSTS_URL, {'sort': 'date-desc'})
+        results_desc = res_desc.data['results']
+
+        self.assertGreater(
+            results_desc[0]['created_at'],
+            results_desc[1]['created_at']
+        )
+
+    def tst_sorting_posts_by_update(self):
+        """Test sorting posts by updated_at in ascending and descending order."""
+        res_asc = self.client.get(POSTS_URL, {'sort': 'update-asc'})
+        results_asc = res_asc.data['results']
+
+        self.assertGreater(
+            results_asc[1]['updated_at'],
+            results_asc[0]['updated_at']
+        )
+
+        res_desc = self.client.get(POSTS_URL, {'sort': 'update-desc'})
+        results_desc = res_desc.data['results']
+
+        self.assertGreater(
+            results_desc[0]['updated_at'],
+            results_desc[1]['updated_at']
+        )
+
+
 class StaffPostsAPITests(TestCase):
     """Test for API calls that require is_staff set to True."""
 

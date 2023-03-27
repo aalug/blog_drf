@@ -1,6 +1,8 @@
 FROM python:3.10-alpine3.16
 LABEL maintainer="aalug"
 
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 COPY requirements.txt /tmp/requirements.txt
 COPY . /app

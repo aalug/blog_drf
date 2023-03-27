@@ -116,7 +116,7 @@ class StaffTagsAPITests(TestCase):
         post = create_post(user=self.admin)
         post.tags.add(tag_1)
 
-        res = self.client.get(POSTS_URL)
+        res = self.client.get(POSTS_URL, {'tags': tag_1.id})
         post_data = res.data['results'][0]
 
         self.assertEqual(len(post_data['tags']), 1)

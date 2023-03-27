@@ -29,6 +29,12 @@ class ReadOnly(BasePermission):
                 'tags',
                 OpenApiTypes.STR,
                 description='Comma-separated list of tag IDs to filter.',
+            ),
+            OpenApiParameter(
+                'sort',
+                OpenApiTypes.STR,
+                description='Sorting posts by: title, comments, date and update'
+                            '(each with -asc or -desc)',
             )
         ]
     )
@@ -48,14 +54,34 @@ class PostsViewSet(viewsets.ModelViewSet):
         return [int(str_id) for str_id in qs.split(',')]
 
     def get_queryset(self):
-        """Return post objects with optional filtering by tags."""
-        tags = self.request.query_params.get('tags')
+        """Return post objects with optional filtering by tags and/ or sorting."""
         queryset = self.queryset
+        tags = self.request.query_params.get('tags')
         if tags:
             tag_ids = self._params_to_ints(tags)
-            queryset = queryset.filter(tags__id__in=tag_ids)
+            queryset = queryset.filter(tags__id__in=tag_ids).distinct()
 
-        return queryset.order_by('-created_at').distinct()
+        sort = self.request.query_params.get('sort')
+        if sort:
+            queryset = list(queryset)
+            if sort == 'title-asc':
+                queryset.sort(key=lambda p: p.title.lower())
+            elif sort == 'title-desc':
+                queryset.sort(key=lambda p: p.title.lower(), reverse=True)
+            elif sort == 'comments-asc':
+                queryset.sort(key=lambda p: p.number_of_comments)
+            elif sort == 'comments-desc':
+                queryset.sort(key=lambda p: p.number_of_comments, reverse=True)
+            elif sort == 'date-asc':
+                queryset.sort(key=lambda p: p.created_at)
+            elif sort == 'date-desc':
+                queryset.sort(key=lambda p: p.created_at, reverse=True)
+            elif sort == 'update-asc':
+                queryset.sort(key=lambda p: p.updated_at)
+            elif sort == 'update-desc':
+                queryset.sort(key=lambda p: p.updated_at, reverse=True)
+
+        return queryset
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
@@ -146,4 +172,3 @@ class VoteViewSet(mixins.CreateModelMixin,
     def perform_create(self, serializer):
         """Create a new vote."""
         serializer.save(user=self.request.user)
-
