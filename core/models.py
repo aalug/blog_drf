@@ -98,7 +98,7 @@ class Post(models.Model):
     @property
     def number_of_comments(self):
         """Return the number of comments for this post."""
-        return Comment.objects.filter(post=self).count()
+        return self.comments.count()
 
     @property
     def images(self):
