@@ -1,6 +1,7 @@
 """
 Serializers for the posts API.
 """
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from core.models import Post, Tag, Comment, PostImage, Vote
@@ -48,9 +49,18 @@ class PostImageSerializer(serializers.ModelSerializer):
         }
 
 
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer for the User model."""
+
+    class Meta:
+        model = get_user_model()
+        fields = ['id', 'email', 'username', 'is_staff']
+
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for the post model."""
     tags = TagSerializer(many=True, required=False)
+    author = UserSerializer()
 
     class Meta:
         model = Post
