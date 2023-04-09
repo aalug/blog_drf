@@ -104,6 +104,12 @@ class TagViewSet(mixins.UpdateModelMixin,
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
 
+    def paginate_queryset(self, queryset, view=None):
+        if 'no_page' in self.request.query_params:
+            return None
+        else:
+            return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
 
 class CommentViewSer(mixins.CreateModelMixin,
                      mixins.UpdateModelMixin,
