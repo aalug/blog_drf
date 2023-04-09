@@ -26,7 +26,16 @@ To run tests:
 - Use `/api/user/forgot-password/`to get a link to reset the password
 
 **Posts app**
-- Use `/api/post/posts/` to create a new post and retrieve all posts
+- Use `/api/post/posts/` to create a new post and retrieve all posts. Available query params:
+  + `tags` - a list of tags ids to filter by. For example `?tags=1,5,20`
+  + `sort` - sorting posts by:
+    - `title-asc`, `title-desc` - title
+    - `comments-asc`, `comments-desc`- number of comments
+    - `date-asc`, `date-desc` - `created_at` value
+    - `update-asc`, `update-desc` - `updated_at` value
+    
+  each in ascending or descending order. For example `?sort=comments-asc`.
+ 
 - Use `/api/post/posts/{id}/` to see post details, update and delete a post
 
 
