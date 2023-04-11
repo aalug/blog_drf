@@ -3,6 +3,8 @@
 The app is build with the **Django REST framework** and uses:
 - Docker
 - Postgres
+- Celery
+- RabbitMQ
 - drf-spectacular for documentation
 
 ## Getting started
@@ -23,7 +25,7 @@ To run tests:
 - Use `/api/user/create/` to create a new user 
 - Then use `/api/user/token/` to create a token for the created user
 - Use `/api/user/profile/` to retrieve user details and update password and user profile details
-- Use `/api/user/forgot-password/`to get a link to reset the password
+- Use `/api/user/forgot-password/`to send an email with a link to reset the password.
 
 **Posts app**
 - Use `/api/post/posts/` to create a new post and retrieve all posts. Available query params:
