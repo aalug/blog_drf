@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+  # Postgres
   db:
     image: postgres:15-alpine
     volumes:
@@ -12,6 +13,8 @@ services:
       - POSTGRES_PASSWORD=admin
     ports:
       - "5432:5432"
+
+  # Django
   app:
     build: .
     container_name: blog_app_drf
@@ -29,8 +32,29 @@ services:
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASSWORD=admin
+      - CELERY_BROKER=amqp://guest:guest@rabbitmq:5672/
     depends_on:
       - db
+      - celery
+      - rabbitmq
+
+  # Celery worker
+  celery:
+    build: .
+    container_name: blog_app_celery
+    command: celery -A user worker -l info
+    volumes:
+      - .:/app/
+    depends_on:
+      - rabbitmq
+
+  # RabbitMQ
+  rabbitmq:
+    container_name: blog_app_rabbitmq
+    image: rabbitmq:3.11.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
 
 volumes:
   dev-db-data:

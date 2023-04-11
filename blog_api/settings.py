@@ -66,7 +66,7 @@ ROOT_URLCONF = 'blog_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': []
+        'DIRS': [BASE_DIR / 'user']
         ,
         'APP_DIRS': True,
         'OPTIONS': {
@@ -163,3 +163,18 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 
 HOST = os.environ.get('HOST')
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER')
+
+# emails configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
+
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
+
+FRONTEND_APP_URL = os.environ.get('FRONTEND_APP_URL')
