@@ -43,7 +43,6 @@ class PostsViewSet(viewsets.ModelViewSet):
     """Manage posts APIs. Unauthenticated users can only use
        GET method, to create, update and delete is_staff
        set to True is required."""
-    serializer_class = serializers.PostSerializer
     queryset = Post.objects.all()
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminUser | ReadOnly]

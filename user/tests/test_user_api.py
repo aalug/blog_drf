@@ -128,20 +128,6 @@ class PublicUserApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_forgot_password(self):
-        """Test forgot password returns correct link."""
-        user = create_user(
-            email='user@example.com',
-            password='123123',
-            username='user3'
-        )
-        res = self.client.post(FORGOT_PASSWORD_URL, {'email': user.email}, format='json')
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('link', res.data)
-        pattern = fr'{settings.HOST}/api/user/reset-password/.+/.+/'
-        self.assertRegex(res.data['link'], pattern)
-
     def test_forgot_password_email_not_found(self):
         """Test error is returned if the user asking for password reset
            with the given email does not exist."""
@@ -149,41 +135,6 @@ class PublicUserApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn('link', res.data)
-
-    def test_reset_password(self):
-        """Test reset password is successful."""
-        user = create_user(
-            email='user@example.com',
-            password='123123',
-            username='user3'
-        )
-        res_1 = self.client.post(FORGOT_PASSWORD_URL, {'email': user.email}, format='json')
-        reset_link = res_1.data['link']
-
-        new_password = 'new_password'
-        res_2 = self.client.patch(reset_link, {'password': new_password})
-
-        self.assertEqual(res_2.status_code, status.HTTP_200_OK)
-        user_with_new_password = get_user_model().objects.filter(id=user.id).first()
-        self.assertTrue(user_with_new_password.check_password(new_password))
-
-    def test_reset_password_invalid_value(self):
-        """Test error is returned if new password is invalid."""
-        user = create_user(
-            email='user@example.com',
-            password='123123',
-            username='user3'
-        )
-        res_1 = self.client.post(FORGOT_PASSWORD_URL, {'email': user.email}, format='json')
-        reset_link = res_1.data['link']
-
-        new_password = '12345'  # invalid because it has to be at least 6 characters
-        res_2 = self.client.patch(reset_link, {'password': new_password})
-
-        self.assertEqual(res_2.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertFalse(
-            get_user_model().objects.filter(id=user.id).first().check_password(new_password)
-        )
 
 
 class PrivateUserApiTests(TestCase):

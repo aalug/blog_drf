@@ -42,7 +42,7 @@ services:
   celery:
     build: .
     container_name: blog_app_celery
-    command: celery -A user worker -l info
+    command: celery -A blog_api worker -l info
     volumes:
       - .:/app/
     depends_on:

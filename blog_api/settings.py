@@ -164,7 +164,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 HOST = os.environ.get('HOST')
 
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER')
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER', 'amqp://guest:guest@rabbitmq:5672/')
 
 # emails configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
