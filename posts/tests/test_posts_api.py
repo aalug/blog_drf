@@ -101,7 +101,7 @@ class PublicPostsAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['title'], self.post.title)
         self.assertEqual(res.data['slug'], self.post.slug)
-        self.assertEqual(res.data['author'], self.post.author.id)
+        self.assertEqual(res.data['author']['id'], self.post.author.id)
         self.assertEqual(res.data['description'], self.post.description)
         self.assertEqual(res.data['body'], self.post.body)
         self.assertIn('images', res.data)
@@ -134,7 +134,7 @@ class PublicPostsAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(comments), 1)
-        self.assertEqual(comments[0]['author'], comment.author.id)
+        self.assertEqual(comments[0]['author']['id'], comment.author.id)
         self.assertEqual(comments[0]['text'], comment.text)
 
     def test_get_posts_images(self):
@@ -262,7 +262,7 @@ class StaffPostsAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data['title'], payload['title'])
         self.assertEqual(res.data['description'], payload['description'])
-        self.assertEqual(res.data['author'], self.admin.id)
+        self.assertEqual(res.data['author']['id'], self.admin.id)
         self.assertEqual(res.data['slug'], slugify(payload['title']))
 
     def test_update_post_success(self):

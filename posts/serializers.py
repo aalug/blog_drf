@@ -4,7 +4,7 @@ Serializers for the posts API.
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from core.models import Post, Tag, Comment, PostImage, Vote
+from core.models import Post, Tag, Comment, PostImage, Vote, UserProfile
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -14,26 +14,6 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ('id', 'name')
         extra_kwargs = {'id': {'read_only': True}}
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    """Serializer for adding comment to a post."""
-
-    class Meta:
-        model = Comment
-        fields = ('id', 'author', 'text', 'post',
-                  'number_of_upvotes', 'number_of_downvotes',
-                  'created_at', 'updated_at')
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'author': {'read_only': True},
-            'post': {'required': True},
-            'text': {'required': True},
-            'number_of_upvotes': {'read_only': True},
-            'number_of_downvotes': {'read_only': True},
-            'created_at': {'read_only': True},
-            'updated_at': {'read_only': True},
-        }
 
 
 class PostImageSerializer(serializers.ModelSerializer):
@@ -54,13 +34,57 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['id', 'email', 'username', 'is_staff']
+        fields = ('id', 'email', 'username', 'is_staff')
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """serializer for the UserProfile model."""
+
+    class Meta:
+        model = UserProfile
+        fields = ('first_name', 'last_name',
+                  'date_of_birth', 'profile_image', 'points')
+
+
+class PublicUserSerializer(UserSerializer):
+    """Serializer for the user model. Used for comments
+       so the other users can see specific data."""
+    user_profile = UserProfileSerializer()
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ('user_profile',)
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for adding comment to a post."""
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'author', 'text', 'post')
+        extra_kwargs = {
+            'post': {'required': True, 'write_only': True},
+            'text': {'required': True},
+            'author': {'read_only': True},
+        }
+
+
+class GetCommentSerializer(CommentSerializer):
+    """Serializer for fetching comments. It extends CommentSerializer,
+       and adds additional fields needed only for GET method."""
+    author = PublicUserSerializer()
+
+    class Meta(CommentSerializer.Meta):
+        fields = CommentSerializer.Meta.fields + ('number_of_upvotes',
+                                                  'number_of_downvotes',
+                                                  'created_at',
+                                                  'updated_at')
+        read_only = True
 
 
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for the post model."""
     tags = TagSerializer(many=True, required=False)
-    author = UserSerializer()
+    author = UserSerializer(required=False)
 
     class Meta:
         model = Post
@@ -76,6 +100,20 @@ class PostSerializer(serializers.ModelSerializer):
             'updated_at': {'read_only': True},
             'number_of_comments': {'read_only': True},
         }
+
+
+class PostDetailSerializer(PostSerializer):
+    """Serialize a post details."""
+    comments = GetCommentSerializer(many=True, required=False)
+    images = PostImageSerializer(many=True, required=False)
+
+    class Meta(PostSerializer.Meta):
+        fields = PostSerializer.Meta.fields + ('body', 'images', 'comments')
+        extra_kwargs = PostSerializer.Meta.extra_kwargs.copy()
+        extra_kwargs.update({
+            'comments': {'read_only': True},
+            'images': {'read_only': True},
+        })
 
     @staticmethod
     def _get_or_create_tags(tags, post):
@@ -105,15 +143,6 @@ class PostSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
-
-class PostDetailSerializer(PostSerializer):
-    """Serialize a post detail view."""
-    comments = CommentSerializer(many=True, required=False)
-    images = PostImageSerializer(many=True, required=False)
-
-    class Meta(PostSerializer.Meta):
-        fields = PostSerializer.Meta.fields + ('body', 'images', 'comments')
 
 
 class VoteSerializer(serializers.ModelSerializer):
