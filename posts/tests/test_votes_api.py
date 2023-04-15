@@ -2,7 +2,8 @@
 Tests for the votes API.
 """
 from django.urls import reverse
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
+from django.test.signals import setting_changed
 
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -138,3 +139,33 @@ class PrivateVotesAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
         vote_exists = Vote.objects.filter(id=vote.id).first()
         self.assertTrue(vote_exists)
+
+    def test_double_upvote(self):
+        """Test that voting up twice will result in 0 votes."""
+        payload = {
+            'comment': self.comment.id,
+            'vote_type': Vote.UPVOTE
+        }
+        res_1 = self.client.post(VOTES_URL, payload, format='json')
+        res_2 = self.client.post(VOTES_URL, payload, format='json')
+
+        self.assertEqual(res_1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res_2.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(
+            Vote.objects.filter(comment=self.comment, user=self.user).exists()
+        )
+
+    def test_double_downvote(self):
+        """Test that voting down twice will result in 0 votes."""
+        payload = {
+            'comment': self.comment.id,
+            'vote_type': Vote.DOWNVOTE
+        }
+        res_1 = self.client.post(VOTES_URL, payload, format='json')
+        res_2 = self.client.post(VOTES_URL, payload, format='json')
+
+        self.assertEqual(res_1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res_2.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(
+            Vote.objects.filter(comment=self.comment, user=self.user).exists()
+        )

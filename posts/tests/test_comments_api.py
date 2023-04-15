@@ -18,11 +18,11 @@ def detail_url(comment_id):
     return reverse('posts:comment-detail', args=[comment_id])
 
 
-def create_comment(author, post_id, text='Test text'):
+def create_comment(author, post, text='Test text'):
     """Create and return a comment."""
     return Comment.objects.create(
         author=author,
-        post=post_id,
+        post=post,
         text=text
     )
 

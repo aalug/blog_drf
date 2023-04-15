@@ -12,6 +12,9 @@ from rest_framework.permissions import (IsAdminUser,
                                         BasePermission,
                                         SAFE_METHODS)
 from rest_framework.response import Response
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 
 from core.models import Post, Tag, Comment, PostImage, Vote
 from posts import serializers
@@ -41,11 +44,18 @@ class ReadOnly(BasePermission):
 )
 class PostsViewSet(viewsets.ModelViewSet):
     """Manage posts APIs. Unauthenticated users can only use
-       GET method, to create, update and delete is_staff
-       set to True is required."""
+       GET method. To create, update and delete is_staff
+       set to True is required.
+       Cache is set, so that SQL queries are not needed every time.
+       The cache is set to 60 minutes."""
     queryset = Post.objects.all()
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminUser | ReadOnly]
+
+    @method_decorator(vary_on_cookie)
+    @method_decorator(cache_page(60 * 60))
+    def dispatch(self, *args, **kwargs):
+        return super(PostsViewSet, self).dispatch(*args, **kwargs)
 
     @staticmethod
     def _params_to_ints(qs):

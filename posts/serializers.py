@@ -60,11 +60,12 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('id', 'author', 'text', 'post')
+        fields = ('id', 'author', 'text', 'post', 'created_at')
         extra_kwargs = {
             'post': {'required': True, 'write_only': True},
             'text': {'required': True},
             'author': {'read_only': True},
+            'created_at': {'read_only': True},
         }
 
 
@@ -72,13 +73,28 @@ class GetCommentSerializer(CommentSerializer):
     """Serializer for fetching comments. It extends CommentSerializer,
        and adds additional fields needed only for GET method."""
     author = PublicUserSerializer()
+    has_voted = serializers.SerializerMethodField()
 
     class Meta(CommentSerializer.Meta):
         fields = CommentSerializer.Meta.fields + ('number_of_upvotes',
                                                   'number_of_downvotes',
                                                   'created_at',
-                                                  'updated_at')
+                                                  'updated_at',
+                                                  'has_voted')
         read_only = True
+
+    def get_has_voted(self, obj):
+        user = self.context['request'].user
+
+        if user.is_anonymous:
+            return None
+
+        # Check if the user has voted on the comment
+        try:
+            vote = Vote.objects.get(user=user, comment=obj.id)
+            return vote.vote_type
+        except Vote.DoesNotExist:
+            return None
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -156,3 +172,25 @@ class VoteSerializer(serializers.ModelSerializer):
             'id': {'read_only': True},
             'user': {'read_only': True}
         }
+
+    def create(self, validated_data):
+        """Create a new vote."""
+        # Get the current user from the request object
+        user = self.context['request'].user
+
+        comment_id = validated_data.get('comment').id
+        vote = Vote.objects.filter(user=user, comment__id=comment_id).first()
+
+        if not vote:
+            # User has not voted for this comment yet, proceed normally
+            return Vote.objects.create(**validated_data)
+
+        # User has voted for this comment before, so check if the vote type is the same
+        if vote.vote_type == validated_data.get('vote_type'):
+            # Vote type is the same, so delete the existing vote
+            vote.delete()
+        else:
+            # Vote type is different, so update the existing vote
+            vote.delete()
+            return Vote.objects.create(**validated_data)
+        return vote
