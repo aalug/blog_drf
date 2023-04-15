@@ -16,11 +16,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('id', 'email', 'username', 'password', 'created_at')
+        fields = ('id', 'email', 'username', 'password', 'is_staff')
         extra_kwargs = {
             'id': {'read_only': True},
             'password': {'write_only': True, 'min_length': 6},
-            'created_at': {'read_only': True}
+            'is_staff': {'read_only': True}
         }
 
 

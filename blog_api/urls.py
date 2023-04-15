@@ -27,6 +27,7 @@ urlpatterns = [
         SpectacularSwaggerView.as_view(url_name='api-schema'),
         name='api-docs'
     ),
+    path('__debug__/', include('debug_toolbar.urls')),
     path('api/user/', include('user.urls')),
     path('api/post/', include('posts.urls')),
 ]
@@ -36,4 +37,3 @@ if settings.DEBUG:
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT
     )
-
