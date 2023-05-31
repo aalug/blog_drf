@@ -5,6 +5,7 @@ The app is build with the **Django REST framework** and uses:
 - Postgres
 - Celery
 - RabbitMQ
+- Redis
 - drf-spectacular for documentation
 
 ## Getting started
